@@ -1,153 +1,103 @@
 /*
-  mcp_can.h
-  2012 Copyright (c) Seeed Technology Inc.  All right reserved.
-
-  Author:Loovee
-  2014-1-16
+  MCP2515.h - Library for Microchip MCP2515 CAN Controller
   
-  Contributor: 
+  Author: David Harding
+  Maintainer: RechargeCar Inc (http://rechargecar.com)
+  Further Modification: Collin Kidder
   
-  Cory J. Fowler
-  Latonita
-  Woodward1
-  Mehtajaghvi
-  BykeBlast
-  TheRo0T
-  Tsipizic
-  ralfEdmund
-  Nathancheek
-  BlueAndi
-  Adlerweb
-  Btetz
-  Hurvajs
+  Created: 11/08/2010
   
-  The MIT License (MIT)
+  For further information see:
+  
+  http://ww1.microchip.com/downloads/en/DeviceDoc/21801e.pdf
+  http://en.wikipedia.org/wiki/CAN_bus
 
-  Copyright (c) 2013 Seeed Technology Inc.
 
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files (the "Software"), to deal
-  in the Software without restriction, including without limitation the rights
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  copies of the Software, and to permit persons to whom the Software is
-  furnished to do so, subject to the following conditions:
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Lesser General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
 
-  The above copyright notice and this permission notice shall be included in
-  all copies or substantial portions of the Software.
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Lesser General Public License for more details.
 
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-  THE SOFTWARE.
+  You should have received a copy of the GNU Lesser General Public
+  License along with this library; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef _MCP2515_H_
-#define _MCP2515_H_
 
-#include "sw_can_dfs.h"
+#ifndef MCP2515_h
+#define MCP2515_h
 
-#define MAX_CHAR_IN_MESSAGE 8
+#include "Arduino.h"
+#include "sw_can_defs.h"
 
-class MCP_CAN
+class MCP2515
 {
-    private:
-    
-    INT8U   m_nExtFlg;                                                  /* identifier xxxID             */
-                                                                        /* either extended (the 29 LSB) */
-                                                                        /* or standard (the 11 LSB)     */
-    INT32U  m_nID;                                                      /* can id                       */
-    INT8U   m_nDlc;                                                     /* data length:                 */
-    INT8U   m_nDta[MAX_CHAR_IN_MESSAGE];                            	/* data                         */
-    INT8U   m_nRtr;                                                     /* rtr                          */
-    INT8U   m_nfilhit;
-    INT8U   SPICS;
-
-/*
-*  mcp2515 driver function 
-*/
-   // private:
-protected:
-
-    void mcp2515_reset(void);                                           /* reset mcp2515                */
-
-    INT8U mcp2515_readRegister(const INT8U address);                    /* read mcp2515's register      */
-    
-    void mcp2515_readRegisterS(const INT8U address, 
-	                       INT8U values[], 
-                               const INT8U n);
-    void mcp2515_setRegister(const INT8U address,                       /* set mcp2515's register       */
-                             const INT8U value);
-
-    void mcp2515_setRegisterS(const INT8U address,                      /* set mcp2515's registers      */
-                              const INT8U values[],
-                              const INT8U n);
-    
-    void mcp2515_initCANBuffers(void);
-    
-    void mcp2515_modifyRegister(const INT8U address,                    /* set bit of one register      */
-                                const INT8U mask,
-                                const INT8U data);
-
-    INT8U mcp2515_readStatus(void);                                     /* read mcp2515's Status        */
-    INT8U mcp2515_setCANCTRL_Mode(const INT8U newmode);                 /* set mode                     */
-    INT8U mcp2515_configRate(const INT8U canSpeed);                     /* set boadrate                 */
-    INT8U mcp2515_init(const INT8U canSpeed);                           /* mcp2515init                  */
-
-    void mcp2515_write_id( const INT8U mcp_addr,                        /* write can id                 */
-                               const INT8U ext,
-                               const INT32U id );
-
-    void mcp2515_read_id( const INT8U mcp_addr,                         /* read can id                  */
-                                    INT8U* ext,
-                                    INT32U* id );
-
-    void mcp2515_write_canMsg( const INT8U buffer_sidh_addr );          /* write can msg                */
-    void mcp2515_read_canMsg( const INT8U buffer_sidh_addr);            /* read can msg                 */
-    void mcp2515_start_transmit(const INT8U mcp_addr);                  /* start transmit               */
-    INT8U mcp2515_getNextFreeTXBuf(INT8U *txbuf_n);                     /* get Next free txbuf          */
-
-/*
-*  can operator function
-*/    
-
-    INT8U setMsg(INT32U id, INT8U ext, INT8U len, INT8U rtr, INT8U *pData); /* set message                  */  
-    INT8U setMsg(INT32U id, INT8U ext, INT8U len, INT8U *pData); /* set message                  */  
-    INT8U clearMsg();                                               /* clear all message to zero    */
-    INT8U readMsg();                                                /* read message                 */
-    INT8U sendMsg();                                                /* send message                 */
-
-public:
-    MCP_CAN(INT8U _CS);
-    INT8U begin(INT8U speedset);                                    /* init can                     */
-    INT8U init_Mask(INT8U num, INT8U ext, INT32U ulData);           /* init Masks                   */
-    INT8U init_Filt(INT8U num, INT8U ext, INT32U ulData);           /* init filters                 */
-    INT8U sendMsgBuf(INT32U id, INT8U ext, INT8U rtr, INT8U len, INT8U *buf);   /* send buf                     */
-    INT8U sendMsgBuf(INT32U id, INT8U ext, INT8U len, INT8U *buf);   /* send buf                     */
-    INT8U readMsgBuf(INT8U *len, INT8U *buf);                       /* read buf                     */
-    INT8U readMsgBufID(INT32U *ID, INT8U *len, INT8U *buf);         /* read buf with object ID      */
-    INT8U checkReceive(void);                                       /* if something received        */
-    INT8U checkError(void);                                         /* if something error           */
-    INT32U getCanId(void);                                          /* get can id when receive      */
-    INT8U isRemoteRequest(void);                                    /* get RR flag when receive     */
-    INT8U isExtendedFrame(void);                                    /* did we recieve 29bit frame?  */
-};
-
-class SWcan: public MCP_CAN{
-	public:
-	SWcan(INT8U _CS) : MCP_CAN(_CS){	};
-	void setupSW(unsigned long addr);
-	void mode(byte mode);
+  public:
+	// Constructor defining which pins to use for CS, RESET and INT
+    MCP2515(uint8_t CS_Pin, uint8_t INT_Pin);
 	
-	private:
-	unsigned long address;
+	// Overloaded initialization function
+	int Init(uint32_t baud, uint8_t freq);
+	int Init(uint32_t baud, uint8_t freq, uint8_t sjw);
+	
+	// Basic MCP2515 SPI Command Set
+    void Reset();
+    byte Read(uint8_t address);
+    void Read(uint8_t address, uint8_t data[], uint8_t bytes);
+	SWFRAME ReadBuffer(uint8_t buffer);
+	void Write(uint8_t address, uint8_t data);
+	void Write(uint8_t address, uint8_t data[], uint8_t bytes);
+	void LoadBuffer(uint8_t buffer, SWFRAME *message);
+	void SendBuffer(uint8_t buffers);
+	uint8_t Status();
+	uint8_t RXStatus();
+	void BitModify(uint8_t address, uint8_t mask, uint8_t data);
 
+	// Extra functions
+	bool Interrupt(); // Expose state of INT pin
+	bool Mode(uint8_t mode); // Returns TRUE if mode change successful
+	void EnqueueRX(SWFRAME& newFrame);
+	void EnqueueTX(SWFRAME& newFrame);
+	bool GetRXFrame(SWFRAME &frame);
+	void SetRXFilter(uint8_t filter, long FilterValue, bool ext);
+	void SetRXMask(uint8_t mask, long MaskValue, bool ext);
+	void InitFilters(bool permissive);
+	void intHandler();
+	void InitBuffers();
+	int watchFor(); //allow anything through
+	int watchFor(uint32_t id); //allow just this ID through (automatic determination of extended status)
+	int watchFor(uint32_t id, uint32_t mask); //allow a range of ids through
+	int watchForRange(uint32_t id1, uint32_t id2); //try to allow the range from id1 to id2 - automatically determine base ID and mask
+	//void attachCANInterrupt(void (*cb)(CAN_FRAME *)); //alternative callname for setGeneralCallback
+	//void attachCANInterrupt(uint8_t filter, void (*cb)(CAN_FRAME *));
+	//void detachCANInterrupt(uint8_t filter);
+	int available(); //like rx_avail but returns the number of waiting frames
+
+  private:
+	bool _init(uint32_t baud, uint8_t freq, uint8_t sjw, bool autoBaud);
+    // Pin variables
+	uint8_t _CS;
+	uint8_t _INT;
+	volatile uint16_t savedBaud;
+	volatile uint8_t savedFreq;
+	volatile uint8_t running; //1 if out of init code, 0 if still trying to initialize (auto baud detecting)
+    // Definitions for software buffers
+	volatile SWFRAME rx_frames[8];
+	volatile SWFRAME tx_frames[8];
+	volatile uint8_t rx_frame_read_pos, rx_frame_write_pos;
+  	volatile uint8_t tx_frame_read_pos, tx_frame_write_pos;
+	//void (*cbCANFrame[7])(SWFRAME *); //6 filters plus an optional catch all
 };
 
-
+class SWcan: public MCP2515 {
+	public:
+	SWcan(uint8_t _CS, uint8_t _INTPIN) : MCP2515(_CS, _INTPIN){	};
+	void setupSW(unsigned long speed);
+	void mode(byte mode);
+};
 
 #endif
-/*********************************************************************************************************
-  END FILE
-*********************************************************************************************************/
