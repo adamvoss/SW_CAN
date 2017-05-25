@@ -33,6 +33,8 @@
 #include "sw_can.h"
 #include "sw_can_defs.h"
 
+SPISettings canSPISettings(1000000, MSBFIRST, SPI_MODE0);
+
 MCP2515::MCP2515(byte CS_Pin, byte INT_Pin) {
   pinMode(CS_Pin, OUTPUT);
   digitalWrite(CS_Pin,HIGH);
@@ -199,23 +201,28 @@ bool MCP2515::_init(uint32_t CAN_Bus_Speed, uint8_t Freq, uint8_t SJW, bool auto
 }
 
 void MCP2515::Reset() {
+  SPI.beginTransaction(canSPISettings);
   digitalWrite(_CS,LOW);
   SPI.transfer(CAN_RESET);
   digitalWrite(_CS,HIGH);
+  SPI.endTransaction();
 }
 
 uint8_t MCP2515::Read(uint8_t address) {
+  SPI.beginTransaction(canSPISettings);
   digitalWrite(_CS,LOW);
   SPI.transfer(CAN_READ);
   SPI.transfer(address);
   uint8_t data = SPI.transfer(0x00);
   digitalWrite(_CS,HIGH);
+  SPI.endTransaction();
   return data;
 }
 
 void MCP2515::Read(uint8_t address, uint8_t data[], uint8_t bytes) {
   // allows for sequential reading of registers starting at address - see data sheet
   uint8_t i;
+  SPI.beginTransaction(canSPISettings);
   digitalWrite(_CS,LOW);
   SPI.transfer(CAN_READ);
   SPI.transfer(address);
@@ -223,6 +230,7 @@ void MCP2515::Read(uint8_t address, uint8_t data[], uint8_t bytes) {
     data[i] = SPI.transfer(0x00);
   }
   digitalWrite(_CS,HIGH);
+  SPI.endTransaction();
 }
 
 SWFRAME MCP2515::ReadBuffer(uint8_t buffer) {
@@ -232,6 +240,7 @@ SWFRAME MCP2515::ReadBuffer(uint8_t buffer) {
   
   SWFRAME message;
   
+  SPI.beginTransaction(canSPISettings);
   digitalWrite(_CS,LOW);
   SPI.transfer(CAN_READ_BUFFER | (buffer<<1));
   uint8_t byte1 = SPI.transfer(0x00); // RXBnSIDH
@@ -257,21 +266,25 @@ SWFRAME MCP2515::ReadBuffer(uint8_t buffer) {
     message.data.byte[i] = SPI.transfer(0x00);
   }
   digitalWrite(_CS,HIGH);
+  SPI.endTransaction();
 
   return message;
 }
 
 void MCP2515::Write(uint8_t address, uint8_t data) {
+  SPI.beginTransaction(canSPISettings);
   digitalWrite(_CS,LOW);
   SPI.transfer(CAN_WRITE);
   SPI.transfer(address);
   SPI.transfer(data);
   digitalWrite(_CS,HIGH);
+  SPI.endTransaction();
 }
 
 void MCP2515::Write(uint8_t address, uint8_t data[], uint8_t bytes) {
   // allows for sequential writing of registers starting at address - see data sheet
   uint8_t i;
+  SPI.beginTransaction(canSPISettings);
   digitalWrite(_CS,LOW);
   SPI.transfer(CAN_WRITE);
   SPI.transfer(address);
@@ -279,13 +292,16 @@ void MCP2515::Write(uint8_t address, uint8_t data[], uint8_t bytes) {
     SPI.transfer(data[i]);
   }
   digitalWrite(_CS,HIGH);
+  SPI.endTransaction();
 }
 
 void MCP2515::SendBuffer(uint8_t buffers) {
   // buffers should be any combination of TXB0, TXB1, TXB2 ORed together, or TXB_ALL
+  SPI.beginTransaction(canSPISettings);
   digitalWrite(_CS,LOW);
   SPI.transfer(CAN_RTS | buffers);
   digitalWrite(_CS,HIGH);
+  SPI.endTransaction();
 }
 
 void MCP2515::LoadBuffer(uint8_t buffer, SWFRAME *message) {
@@ -317,6 +333,7 @@ void MCP2515::LoadBuffer(uint8_t buffer, SWFRAME *message) {
     byte5 = byte5 | B01000000;
   }
   
+  SPI.beginTransaction(canSPISettings);
   digitalWrite(_CS,LOW);
   SPI.transfer(CAN_LOAD_BUFFER | buffer);  
   SPI.transfer(byte1);
@@ -329,13 +346,16 @@ void MCP2515::LoadBuffer(uint8_t buffer, SWFRAME *message) {
     SPI.transfer(message->data.byte[i]);
   }
   digitalWrite(_CS,HIGH);
+  SPI.endTransaction();
 }
 
 uint8_t MCP2515::Status() {
+  SPI.beginTransaction(canSPISettings);
   digitalWrite(_CS,LOW);
   SPI.transfer(CAN_STATUS);
   uint8_t data = SPI.transfer(0x00);
   digitalWrite(_CS,HIGH);
+  SPI.endTransaction();
   return data;
   /*
   bit 7 - CANINTF.TX2IF
@@ -350,10 +370,12 @@ uint8_t MCP2515::Status() {
 }
 
 uint8_t MCP2515::RXStatus() {
+  SPI.beginTransaction(canSPISettings);
   digitalWrite(_CS,LOW);
   SPI.transfer(CAN_RX_STATUS);
   uint8_t data = SPI.transfer(0x00);
   digitalWrite(_CS,HIGH);
+  SPI.endTransaction();
   return data;
   /*
   bit 7 - CANINTF.RX1IF
@@ -376,12 +398,14 @@ uint8_t MCP2515::RXStatus() {
 
 void MCP2515::BitModify(uint8_t address, uint8_t mask, uint8_t data) {
   // see data sheet for explanation
+  SPI.beginTransaction(canSPISettings);
   digitalWrite(_CS,LOW);
   SPI.transfer(CAN_BIT_MODIFY);
   SPI.transfer(address);
   SPI.transfer(mask);
   SPI.transfer(data);
   digitalWrite(_CS,HIGH);
+  SPI.endTransaction();
 }
 
 bool MCP2515::Interrupt() {
