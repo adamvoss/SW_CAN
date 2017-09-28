@@ -31,11 +31,10 @@
 
 // Pin definitions specific to how the MCP2515 is wired up.
 #define CS_PIN    85
-#define RESET_PIN  7
 #define INT_PIN    84
 
 // Create CAN object with pins as defined
-MCP2515 CAN(CS_PIN, RESET_PIN, INT_PIN);
+SWcan CAN(CS_PIN, INT_PIN);
 
 void CANHandler() {
 	CAN.intHandler();
@@ -56,12 +55,7 @@ void setup() {
 	// Initialize MCP2515 CAN controller at the specified speed and clock frequency
 	// (Note:  This is the oscillator attached to the MCP2515, not the Arduino oscillator)
 	//speed in KHz, clock in MHz
-	if(CAN.Init(250,16))
-	{
-		Serial.println("MCP2515 Init OK ...");
-	} else {
-		Serial.println("MCP2515 Init Failed ...");
-	}
+	CAN.setupSW(250);
 	
 	attachInterrupt(6, CANHandler, FALLING);
 	CAN.InitFilters(false);
@@ -76,7 +70,7 @@ void setup() {
 byte i=0;
 
 // CAN message frame (actually just the parts that are exposed by the MCP2515 RX/TX buffers)
-Frame message;
+SWFRAME message;
 
 void loop() {
 	
@@ -85,15 +79,15 @@ void loop() {
 		Serial.print("ID: ");
 		Serial.println(message.id,HEX);
 		Serial.print("Extended: ");
-		if(message.ide) {
+		if(message.extended) {
 			Serial.println("Yes");
 		} else {
 			Serial.println("No");
 		}
-		Serial.print("DLC: ");
-		Serial.println(message.dlc,DEC);
-		for(i=0;i<message.dlc;i++) {
-			Serial.print(message.data[i],HEX);
+		Serial.print("Length: ");
+		Serial.println(message.length,DEC);
+		for(i=0;i<message.length;i++) {
+			Serial.print(message.data.byte[i],HEX);
 			Serial.print(" ");
 		}
 		Serial.println();
@@ -103,10 +97,9 @@ void loop() {
 		// Simply increment message id and data bytes to show proper transmission
 		// Note: this will double the traffic on the network (provided it passes the filter above)
 		message.id++;
-		for(i=0;i<message.dlc;i++) {
-			message.data[i]++;
+		for(i=0;i<message.length;i++) {
+			message.data.byte[i]++;
 		}
 		CAN.EnqueueTX(message);
 	}
 }
-
